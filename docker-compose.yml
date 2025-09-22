@@ -1,0 +1,38 @@
+services: 
+  db:
+    image: postgres:16
+    container_name: maestro_postgres
+    restart: always 
+    environment: 
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: maestro_db
+    ports:
+      - "5432:5432" 
+    volumes: 
+      - ./pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+
+  maestro:
+    depends_on:
+      - db 
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@maestro_postgres:5432/maestro_db"
+      TASKI_API_KEY: ${TASKI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    image: eardatasci/maestro:maestro-v1.0.1 
+    container_name: maestro 
+    restart: always 
+    ports: 
+      - "8000:8000"
+  
+  web: 
+    image: eardatasci/maestro:web-v1.0.1 
+    container_name: web 
+    restart: always 
+    ports:
+      - "3000:3000"
+    depends_on:
+      - maestro
+      - db 
+
